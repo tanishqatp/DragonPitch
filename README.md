@@ -1,4 +1,4 @@
-# DragonPitch: a real-time pitching coach across three tiers of Qualcomm silicon
+# DragonPitch: real-time hip-before-shoulder pitch sequencing on the Dragonwing IQ-8275 EVK on Hexagon NPU
 
 A pitcher throws in front of a webcam. A Dragonwing IQ-8275 EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
 
