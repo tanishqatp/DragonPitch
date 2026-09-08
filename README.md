@@ -3,7 +3,7 @@
 A pitcher throws in front of a webcam. A Dragonwing IQ-8275 EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
 
 - **Hardware:** Qualcomm Dragonwing IQ-8275 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
-- **Difficulty:** Intermediate — three devices, three codebases, one shared network
+- **Difficulty:** Intermediate
 - **Time:** ~1–2 hours, assuming the EVK and watch are already flashed/paired
 - **Stack:** Python (Flask, TFLite + QNN, OpenCV) · Kotlin/Compose (Wear OS) · Streamlit + Ollama
 
