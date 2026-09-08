@@ -3,8 +3,8 @@
 A pitcher throws in front of a webcam. A Dragonwing EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
 
 - **Hardware:** Qualcomm Dragonwing IQ8 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
-- **Difficulty:** Intermediate
-- **Time:** ~1-2 hours, assuming the EVK and watch are already flashed/paired
+- **Difficulty:** Intermediate — three devices, three codebases, one shared network
+- **Time:** ~1–2 hours, assuming the EVK and watch are already flashed/paired
 - **Stack:** Python (Flask, TFLite + QNN, OpenCV) · Kotlin/Compose (Wear OS) · Streamlit + Ollama
 
 Two Qualcomm silicon families (Dragonwing and Snapdragon), three tiers of compute, one pipeline — no single device does everything, and none of them talk to the cloud to do it.
@@ -141,3 +141,6 @@ At ~24 FPS (one sample every ~42 ms), the pipeline has enough temporal resolutio
 ## Docs referenced
 
 Qualcomm's QAIRT SDK / AI Runtime SDK docs, the pose model's own model card, Wear OS Health Services/Health Connect docs, Edge Impulse's deployment docs, and GenieX's docs + Qualcomm AI Hub.
+
+---
+*Built by Tanishqa Taywade Patil.*
