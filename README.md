@@ -1,8 +1,8 @@
 # DragonPitch: a real-time pitching coach across three tiers of Qualcomm silicon
 
-A pitcher throws in front of a webcam. A Dragonwing EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
+A pitcher throws in front of a webcam. A Dragonwing IQ-8275 EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
 
-- **Hardware:** Qualcomm Dragonwing IQ8 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
+- **Hardware:** Qualcomm Dragonwing IQ-8275 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
 - **Difficulty:** Intermediate — three devices, three codebases, one shared network
 - **Time:** ~1–2 hours, assuming the EVK and watch are already flashed/paired
 - **Stack:** Python (Flask, TFLite + QNN, OpenCV) · Kotlin/Compose (Wear OS) · Streamlit + Ollama
@@ -19,7 +19,7 @@ Two Qualcomm silicon families (Dragonwing and Snapdragon), three tiers of comput
 
 You'll need:
 
-- [ ] A **Dragonwing IQ8 EVK**, flashed with Ubuntu, with a USB webcam attached.
+- [ ] A **Dragonwing IQ-8275 EVK**, flashed with Ubuntu, with a USB webcam attached.
 - [ ] Qualcomm's **QAIRT SDK** installed on the EVK — the stock image does *not* ship `libQnnTFLiteDelegate.so` / `libQnnHtp.so`, so pose inference will silently fall back to CPU (or fail) until this is installed.
 - [ ] A **Pixel Watch 4** (or another Wear OS 3+ device) and Android Studio, to build and side-load the watch app.
 - [ ] A laptop (ideally Snapdragon X Elite, but any machine works) with **Python 3.10+**, **[Ollama](https://ollama.com)** installed, and the `gemma3` model pulled (`ollama pull gemma3`).
@@ -64,7 +64,7 @@ curl http://<evk-ip>:5000/status
 Edit the config block near the top of `final_streamlit.py`:
 
 ```python
-EVK_URL    = "http://YOUR_EVK_IP:5000"  # put your Dragonwing EVK's local network IP here
+EVK_URL    = "http://YOUR_EVK_IP:5000"  # put your Dragonwing IQ-8275 EVK's local network IP here
 OLLAMA_URL = "http://localhost:11434/api/generate"
 ```
 
@@ -80,7 +80,7 @@ streamlit run final_streamlit.py
 Open the `MainActivity.kt` / `Sessionviewmodel.kt` project in Android Studio, update the EVK IP the same way:
 
 ```kotlin
-private val evkBaseUrl = "http://YOUR_EVK_IP:5000"  // put your Dragonwing EVK's local network IP here
+private val evkBaseUrl = "http://YOUR_EVK_IP:5000"  // put your Dragonwing IQ-8275 EVK's local network IP here
 ```
 
 then build and install onto a Pixel Watch 4 (or any Wear OS 3+ device) over ADB or Wi-Fi debugging.
