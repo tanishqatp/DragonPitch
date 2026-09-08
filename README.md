@@ -1,9 +1,9 @@
-# DragonPitch: real-time hip-before-shoulder pitch sequencing on the Dragonwing IQ-8275 EVK on Hexagon NPU
+# DragonPitch: real-time hip-before-shoulder pitch sequencing on the Dragonwing IQ-8275 EVK, at 6.4 ms/frame on the Hexagon NPU
 
 A pitcher throws in front of a webcam. A Dragonwing IQ-8275 EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
 
 - **Hardware:** Qualcomm Dragonwing IQ-8275 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
-- **Difficulty:** Intermediate
+- **Difficulty:** Intermediate — three devices, three codebases, one shared network
 - **Time:** ~1–2 hours, assuming the EVK and watch are already flashed/paired
 - **Stack:** Python (Flask, TFLite + QNN, OpenCV) · Kotlin/Compose (Wear OS) · Streamlit + Ollama
 
@@ -25,24 +25,28 @@ You'll need:
 - [ ] A laptop (ideally Snapdragon X Elite, but any machine works) with **Python 3.10+**, **[Ollama](https://ollama.com)** installed, and the `gemma3` model pulled (`ollama pull gemma3`).
 - [ ] All three devices on the **same local WiFi network** — there's no cloud hop, so they need to be able to reach each other directly.
 
-## Repo structure — which file do I run?
+## Repo structure
 
-| File | Runs on | Role |
-|---|---|---|
-| `final_evk_server.py` | EVK | **Current** Flask server + pose pipeline. Exposes `/session/start`, `/session/stop`, `/status`, `/results`, `/video/*`, `/watch/pitch`. Run this one. |
-| `server.py` | EVK | An earlier iteration (no `/watch/pitch` endpoint) — kept for reference, not the one to run. |
-| `videoApp.py` | EVK | An intermediate iteration between `server.py` and `final_evk_server.py` — also kept for reference. |
-| `app_fi.py` | Laptop | Streamlit coaching-analytics app. Functionally identical to `final_streamlit.py`. |
-| `final_streamlit.py` / `transfer.py` | Laptop | Duplicate copies of the same Streamlit app (`transfer.py` was used to move the app between machines). Any one of the three works — pick `final_streamlit.py`. |
-| `MainActivity.kt`, `Sessionviewmodel.kt` | Watch | Wear OS (Kotlin/Compose) app: session control + peak-acceleration effort tracking. |
-| `test_camera_live.ipynb`, `test_live_camera.ipynb`, `test_vdo.ipynb` | EVK (dev) | Notebooks used to validate the camera/pose pipeline stage by stage during development. Not required to run the system. |
+```
+DragonPitch/
+├── evk/
+│   └── server.py           Flask server + pose pipeline (runs on the EVK)
+├── watch/
+│   ├── MainActivity.kt      Wear OS session UI
+│   └── SessionViewModel.kt  Session state + peak-acceleration effort tracking
+├── analytics/
+│   └── streamlit_app.py    Coaching-analytics dashboard (runs on the laptop)
+└── requirements.txt
+```
+
+Three independently-runnable pieces, one per device.
 
 ## Step 1: bring up the EVK pipeline
 
 On the EVK:
 
 ```bash
-pip install flask flask_socketio opencv-python numpy tensorflow
+pip install -r requirements.txt
 ```
 
 Make sure the QAIRT SDK's delegate libraries are on the path (`libQnnTFLiteDelegate.so`, `libQnnHtp.so`, and the Hexagon firmware skel libraries) — consult Qualcomm's QAIRT SDK / AI Runtime SDK documentation if they aren't already installed.
@@ -50,7 +54,8 @@ Make sure the QAIRT SDK's delegate libraries are on the path (`libQnnTFLiteDeleg
 Run the server:
 
 ```bash
-python final_evk_server.py
+cd evk
+python server.py
 ```
 
 It listens on `0.0.0.0:5000`. Confirm it's up from another machine on the same network:
@@ -61,7 +66,7 @@ curl http://<evk-ip>:5000/status
 
 ## Step 2: point the laptop app at the EVK
 
-Edit the config block near the top of `final_streamlit.py`:
+Edit the config block near the top of `analytics/streamlit_app.py`:
 
 ```python
 EVK_URL    = "http://YOUR_EVK_IP:5000"  # put your Dragonwing IQ-8275 EVK's local network IP here
@@ -71,13 +76,13 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 Then, with Ollama running and `gemma3` pulled:
 
 ```bash
-pip install streamlit requests matplotlib
-streamlit run final_streamlit.py
+cd analytics
+streamlit run streamlit_app.py
 ```
 
 ## Step 3: build and install the watch app
 
-Open the `MainActivity.kt` / `Sessionviewmodel.kt` project in Android Studio, update the EVK IP the same way:
+Open the `watch/` folder in Android Studio, update the EVK IP the same way:
 
 ```kotlin
 private val evkBaseUrl = "http://YOUR_EVK_IP:5000"  // put your Dragonwing IQ-8275 EVK's local network IP here
@@ -96,7 +101,7 @@ then build and install onto a Pixel Watch 4 (or any Wear OS 3+ device) over ADB 
 
 The core metric checks whether **hip rotation begins before shoulder rotation** — a scale-invariant, joint-angle representation (hip: left_hip→right_hip→right_knee; shoulder: left_shoulder→right_shoulder→right_hip) that stays meaningful regardless of camera distance. An earlier version tried to use wrist/elbow angle for the "arm" side of the comparison, but the arm has no genuine quiet baseline during a windup (glove adjustments, rocking motion, the arm passing behind the body all move it continuously) — so that signal was dropped in favor of the more stable, more spec-accurate hip/shoulder comparison.
 
-By design, `compute_onset_by_velocity()` in `videoApp.py` always returns a definitive True/False verdict rather than an honest "not enough confident data" outcome — a deliberate demo-friendly tradeoff, not an oversight.
+By design, `compute_onset_by_velocity()` in `evk/server.py` always returns a definitive True/False verdict rather than an honest "not enough confident data" outcome — a deliberate demo-friendly tradeoff, not an oversight.
 
 ## Performance
 

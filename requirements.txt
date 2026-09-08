@@ -1,0 +1,10 @@
+# EVK (evk/server.py)
+flask
+opencv-python
+numpy
+tensorflow
+
+# Analytics (analytics/streamlit_app.py)
+streamlit
+requests
+matplotlib
