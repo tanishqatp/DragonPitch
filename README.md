@@ -4,6 +4,7 @@ A pitcher throws in front of a webcam. A Dragonwing EVK watches their hips and s
 
 **Hardware:** Qualcomm Dragonwing IQ8 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
 **Difficulty:** Intermediate — three devices, three codebases, one shared network
+**Time:** ~1–2 hours, assuming the EVK and watch are already flashed/paired
 **Stack:** Python (Flask, TFLite + QNN, OpenCV) · Kotlin/Compose (Wear OS) · Streamlit + Ollama
 
 Two Qualcomm silicon families (Dragonwing and Snapdragon), three tiers of compute, one pipeline — no single device does everything, and none of them talk to the cloud to do it.
@@ -18,11 +19,11 @@ Two Qualcomm silicon families (Dragonwing and Snapdragon), three tiers of comput
 
 You'll need:
 
-- A **Dragonwing IQ8 EVK**, flashed with Ubuntu, with a USB webcam attached.
-- Qualcomm's **QAIRT SDK** installed on the EVK — the stock image does *not* ship `libQnnTFLiteDelegate.so` / `libQnnHtp.so`, so pose inference will silently fall back to CPU (or fail) until this is installed.
-- A **Pixel Watch 4** (or another Wear OS 3+ device) and Android Studio, to build and side-load the watch app.
-- A laptop (ideally Snapdragon X Elite, but any machine works) with **Python 3.10+**, **[Ollama](https://ollama.com)** installed, and the `gemma3` model pulled (`ollama pull gemma3`).
-- All three devices on the **same local WiFi network** — there's no cloud hop, so they need to be able to reach each other directly.
+- [ ] A **Dragonwing IQ8 EVK**, flashed with Ubuntu, with a USB webcam attached.
+- [ ] Qualcomm's **QAIRT SDK** installed on the EVK — the stock image does *not* ship `libQnnTFLiteDelegate.so` / `libQnnHtp.so`, so pose inference will silently fall back to CPU (or fail) until this is installed.
+- [ ] A **Pixel Watch 4** (or another Wear OS 3+ device) and Android Studio, to build and side-load the watch app.
+- [ ] A laptop (ideally Snapdragon X Elite, but any machine works) with **Python 3.10+**, **[Ollama](https://ollama.com)** installed, and the `gemma3` model pulled (`ollama pull gemma3`).
+- [ ] All three devices on the **same local WiFi network** — there's no cloud hop, so they need to be able to reach each other directly.
 
 ## Repo structure — which file do I run?
 
@@ -137,14 +138,9 @@ At ~24 FPS (one sample every ~42 ms), the pipeline has enough temporal resolutio
 - Add an honest "not enough confident data" sequencing outcome.
 - Field-test the live capture loop outside the development sandbox.
 
-## Sources consulted
+## Docs referenced
 
-- Qualcomm's QAIRT SDK / AI Runtime SDK documentation (resolving the missing `libQnnTFLiteDelegate.so` / `libQnnHtp.so` on the EVK's stock image).
-- The pose model's own model card (peak reported throughput ~385 inferences/sec, vs. ~156 inferences/sec measured live — consistent with peak-benchmark vs. live-pipeline conditions).
-- Wear OS Health Services and Health Connect API documentation.
-- The WESAD (Wearable Stress and Affect Detection) dataset, evaluated and set aside in favor of the pitch-event classifier.
-- Edge Impulse's deployment documentation (Spectral Analysis vs. Raw Data/Flatten tradeoff, TFLite export options).
-- GenieX's own documentation and Qualcomm AI Hub (Q4_0 quantization for Hexagon NPU support).
+Qualcomm's QAIRT SDK / AI Runtime SDK docs, the pose model's own model card, Wear OS Health Services/Health Connect docs, Edge Impulse's deployment docs, and GenieX's docs + Qualcomm AI Hub.
 
 ---
 *Built by Tanishqa Taywade Patil.*
