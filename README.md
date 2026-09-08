@@ -141,6 +141,3 @@ At ~24 FPS (one sample every ~42 ms), the pipeline has enough temporal resolutio
 ## Docs referenced
 
 Qualcomm's QAIRT SDK / AI Runtime SDK docs, the pose model's own model card, Wear OS Health Services/Health Connect docs, Edge Impulse's deployment docs, and GenieX's docs + Qualcomm AI Hub.
-
----
-*Built by Tanishqa Taywade Patil.*
