@@ -1,4 +1,4 @@
-# DragonPitch: real-time hip-before-shoulder pitch sequencing on the Dragonwing IQ-8275 EVK, at 6.4 ms/frame on the Hexagon NPU
+# DragonPitch: real-time hip-before-shoulder pitch sequencing on the Dragonwing IQ-8275 EVK on the Hexagon NPU
 
 A pitcher throws in front of a webcam. A Dragonwing IQ-8275 EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
 
@@ -146,6 +146,3 @@ At ~24 FPS (one sample every ~42 ms), the pipeline has enough temporal resolutio
 ## Docs referenced
 
 Qualcomm's QAIRT SDK / AI Runtime SDK docs, the pose model's own model card, Wear OS Health Services/Health Connect docs, Edge Impulse's deployment docs, and GenieX's docs + Qualcomm AI Hub.
-
----
-*Built by Tanishqa Taywade Patil.*
