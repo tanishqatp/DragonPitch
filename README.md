@@ -1,6 +1,6 @@
 # DragonPitch
 
-**Your hips don't lie, and now your watch won't either.** A real-time pitching coach that runs pose estimation on a Qualcomm Dragonwing IQ-8275, shows verdicts on a Pixel Watch 4 and writes coaching feedback on a Snapdragon X Elite laptop, all without the cloud.
+**Your hips don't lie, and now your watch won't either!** A real-time pitching coach that runs pose estimation on a Qualcomm Dragonwing IQ-8275, shows verdicts on a Pixel Watch 4 and writes coaching feedback on a Snapdragon X Elite laptop, all without the cloud.
 
 ## Devices & Components
 
