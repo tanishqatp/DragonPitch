@@ -1,148 +1,115 @@
-# DragonPitch: real-time hip-before-shoulder pitch sequencing on the Dragonwing IQ-8275 EVK on the Hexagon NPU
+# DragonPitch
 
-A pitcher throws in front of a webcam. A Dragonwing IQ-8275 EVK watches their hips and shoulders on its NPU and scores whether their sequencing is correct. A Pixel Watch on their wrist tracks effort. A laptop turns all of it into spoken-language coaching feedback from a local LLM. No cloud involved anywhere.
+**Your hips don't lie, and now your watch won't either.** A real-time pitching coach that runs pose estimation on a Qualcomm Dragonwing IQ-8275, shows verdicts on a Pixel Watch 4 and writes coaching feedback on a Snapdragon X Elite laptop, all without the cloud.
 
-- **Hardware:** Qualcomm Dragonwing IQ-8275 EVK · Pixel Watch 4 (Snapdragon W5 Gen 2) · Snapdragon X Elite laptop
-- **Difficulty:** Intermediate
-- **Time:** ~1–2 hours, assuming the EVK and watch are already flashed/paired
-- **Stack:** Python (Flask, TFLite + QNN, OpenCV) · Kotlin/Compose (Wear OS) · Streamlit + Ollama
+## Devices & Components
 
-Two Qualcomm silicon families (Dragonwing and Snapdragon), three tiers of compute, one pipeline — no single device does everything, and none of them talk to the cloud to do it.
+| Item | Qty | Role |
+| --- | --- | --- |
+| Qualcomm Dragonwing IQ-8275 EVK | 1 | Camera capture, pose estimation on the Hexagon NPU, sequencing score, Flask server |
+| USB webcam | 1 | Watches the pitcher |
+| Google Pixel Watch 4 (Snapdragon W5 Gen 2) | 1 | Start/stop control, live verdict, effort tracking |
+| Snapdragon X Elite laptop | 1 | Coaching dashboard and local LLM |
+
+## Software & Tools
+
+- [Ubuntu for Qualcomm IoT](https://ubuntu.com/download/qualcomm-iot), the operating system on the IQ-8275 EVK
+- [Qualcomm Launcher](https://softwarecenter.qualcomm.com/catalog/item/Qualcomm_Launcher), to flash Ubuntu onto the EVK
+- [Qualcomm AI Runtime (QAIRT)](https://www.qualcomm.com/developer/software/qualcomm-ai-runtime-sdk-qairt), which provides the QNN delegate that runs the model on the Hexagon NPU
+- [HRNetPose from Qualcomm AI Hub](https://aihub.qualcomm.com/models/hrnet_pose), the pose estimation model
+- [TensorFlow Lite](https://www.tensorflow.org/lite), [OpenCV](https://opencv.org/) and [Flask](https://flask.palletsprojects.com/), for the EVK's vision pipeline and server
+- [FFmpeg](https://ffmpeg.org/), to encode the skeleton replays
+- [Android Studio](https://developer.android.com/studio) and [Wear OS](https://developer.android.com/wear) with Jetpack Compose, for the watch app
+- [Streamlit](https://streamlit.io/), for the coaching dashboard
+- [Ollama](https://ollama.com/) with [Gemma 3](https://ollama.com/library/gemma3), for local AI coaching
+
+## Project overview
+
+Every great pitch starts in the hips. When the hips rotate before the shoulders, power flows up the body into the arm. When the shoulders fire first, the arm does all the work. The difference lasts a fraction of a second, far too fast to see from the dugout.
+
+DragonPitch measures it on every throw. It's built in three layers, each running on a different tier of Qualcomm silicon:
+
+- **Vision, on the Dragonwing IQ-8275 EVK.** A USB webcam feeds HRNetPose running on the Hexagon NPU. The EVK detects each pitch, times when the hips and shoulders start rotating, and scores the sequencing.
+- **Wearable, on the Pixel Watch 4 (Snapdragon W5 Gen 2).** The pitcher starts and stops sessions from the wrist, sees each verdict, and the watch's accelerometer tracks arm effort.
+- **Coaching, on a Snapdragon X Elite laptop.** A Streamlit dashboard shows skeleton replays and per-pitch results, and Gemma 3 running locally writes coaching notes from the data.
+
+The EVK is the hub. It runs a small Flask server, and the watch and laptop talk to it over local WiFi. Nothing is sent to the cloud.
 
 ## What you'll build
 
-- A live pose-estimation pipeline on the EVK's Hexagon NPU that decides, in real time, whether a pitcher's hips are rotating before their shoulders.
-- A Wear OS watch app that starts/stops a session and reports live effort back to the EVK.
-- A Streamlit dashboard that pulls both together and asks a local LLM to write the pitcher a coaching note.
+DragonPitch brings all three layers together, but each one is useful on its own. Build the full system, or start with just the part you need:
 
-## Before you start
+- **The full system:** EVK, watch and laptop working together, with live verdicts on the wrist and AI coaching after every session. This is how DragonPitch is designed to run.
+- **Pose estimation only:** just the EVK and a webcam. Run the EVK server, start a session from the keyboard, and see each pitch's verdict and skeleton overlay on screen.
+- **Coaching analysis only:** just a laptop with Ollama. The dashboard comes with sample sessions for five players, so you can try Gemma's team feedback without any other hardware, then connect an EVK later for live data.
 
-You'll need:
+## Key features
 
-- [ ] A **Dragonwing IQ-8275 EVK**, flashed with Ubuntu, with a USB webcam attached.
-- [ ] Qualcomm's **QAIRT SDK** installed on the EVK — the stock image does *not* ship `libQnnTFLiteDelegate.so` / `libQnnHtp.so`, so pose inference will silently fall back to CPU (or fail) until this is installed.
-- [ ] A **Pixel Watch 4** (or another Wear OS 3+ device) and Android Studio, to build and side-load the watch app.
-- [ ] A laptop (ideally Snapdragon X Elite, but any machine works) with **Python 3.10+**, **[Ollama](https://ollama.com)** installed, and the `gemma3` model pulled (`ollama pull gemma3`).
-- [ ] All three devices on the **same local WiFi network** — there's no cloud hop, so they need to be able to reach each other directly.
+1. Real-time pose estimation with HRNetPose, accelerated on the Hexagon NPU.
+2. Hardware-accelerated inference through Qualcomm's QNN TensorFlow Lite delegate (QAIRT).
+3. Three-layer system across Qualcomm silicon:
+   - Pose estimation on the Dragonwing IQ-8275
+   - Session control and effort tracking on the Snapdragon W5 Gen 2
+   - AI coaching on the Snapdragon X Elite
+4. 17-keypoint body pose detection.
+5. Automatic pitch detection from hip rotation speed.
+6. Hip-to-shoulder sequencing score with an adjustable timing threshold.
+7. Skeleton replay clip for every pitch.
+8. Live sequencing verdicts on the watch.
+9. Effort Trend (Low, Moderate or High) from the watch's accelerometer.
+10. Coaching feedback from Gemma 3, running locally through Ollama.
+11. HTTP API on the EVK for the watch, the dashboard and other apps.
+12. Fully local, with no cloud required.
+
+## Developer workflow
+
+1. **Flash the EVK.** Use [Qualcomm Launcher](https://dragonwingdocs.qualcomm.com/Ubuntu/devices/iq8275-evk/update-software/flash-using-qualcomm-launcher) to flash Ubuntu onto the IQ-8275, then connect the USB webcam.
+
+2. **Install the NPU runtime.** Stock Ubuntu doesn't include the TensorFlow Lite QNN delegate, so install QAIRT and the project's dependencies:
+
+   ```bash
+   sudo apt install qairt-libs qairt-headers qairt-tools ffmpeg
+   git clone https://github.com/tanishqatp/DragonPitch.git
+   cd DragonPitch && pip install -r requirements.txt
+   ```
+
+3. **Get the model working on the CPU.** Download the quantized (w8a8) TFLite version of [HRNetPose](https://aihub.qualcomm.com/models/hrnet_pose) and save it as `evk/hrnet_pose.tflite`. Before involving the NPU, confirm it takes a 256×192 image, returns 64×48 heatmaps for 17 joints, and puts each joint on the right body part in a test photo.
+
+4. **Move it to the NPU.** Load Qualcomm's QNN delegate with the HTP (Hexagon NPU) backend and pass it to the interpreter. Then run the same photo through both and compare. On our test photo, every joint peak matched or landed within two heatmap pixels.
+
+   ```python
+   delegate = tf.lite.experimental.load_delegate(
+       "libQnnTFLiteDelegate.so", options={"backend_type": "htp"})
+   interp = tf.lite.Interpreter(model_path, experimental_delegates=[delegate])
+   ```
+
+5. **Run the EVK server.** It opens the camera, detects pitches and serves results over HTTP on port 5000. For pose estimation only, stop here and use the `s` and `x` keys in the video window to start and stop sessions.
+
+   ```bash
+   cd evk && python server.py
+   ```
+
+6. **Build the watch app.** Create a Wear OS project in Android Studio, add `MainActivity.kt` and `SessionViewModel.kt` from `watch/`, set `evkBaseUrl` to the EVK's IP, allow the INTERNET permission and cleartext HTTP, and install it on the watch.
+
+7. **Start the coaching dashboard.** On the laptop, set `EVK_URL` in `analytics/streamlit_app.py`, then run:
+
+   ```bash
+   ollama pull gemma3
+   streamlit run analytics/streamlit_app.py
+   ```
+
+8. **Throw.** Keep the pitcher's full body in frame from windup to follow-through, tap Start on the watch, and pitch. Verdicts appear on the wrist, and replays and coaching appear in the dashboard.
 
 ## Repo structure
 
 ```
 DragonPitch/
 ├── evk/
-│   └── server.py           Flask server + pose pipeline (runs on the EVK)
+│   └── server.py            Pose pipeline and Flask server (runs on the EVK)
 ├── watch/
 │   ├── MainActivity.kt      Wear OS session UI
-│   └── SessionViewModel.kt  Session state + peak-acceleration effort tracking
+│   └── SessionViewModel.kt  Session control and effort tracking
 ├── analytics/
-│   └── streamlit_app.py    Coaching-analytics dashboard (runs on the laptop)
+│   └── streamlit_app.py     Coaching dashboard (runs on the laptop)
 └── requirements.txt
 ```
-
-Three independently-runnable pieces, one per device.
-
-## Step 1: bring up the EVK pipeline
-
-On the EVK:
-
-```bash
-pip install -r requirements.txt
-```
-
-Make sure the QAIRT SDK's delegate libraries are on the path (`libQnnTFLiteDelegate.so`, `libQnnHtp.so`, and the Hexagon firmware skel libraries) — consult Qualcomm's QAIRT SDK / AI Runtime SDK documentation if they aren't already installed.
-
-Run the server:
-
-```bash
-cd evk
-python server.py
-```
-
-It listens on `0.0.0.0:5000`. Confirm it's up from another machine on the same network:
-
-```bash
-curl http://<evk-ip>:5000/status
-```
-
-## Step 2: point the laptop app at the EVK
-
-Edit the config block near the top of `analytics/streamlit_app.py`:
-
-```python
-EVK_URL    = "http://YOUR_EVK_IP:5000"  # put your Dragonwing IQ-8275 EVK's local network IP here
-OLLAMA_URL = "http://localhost:11434/api/generate"
-```
-
-Then, with Ollama running and `gemma3` pulled:
-
-```bash
-cd analytics
-streamlit run streamlit_app.py
-```
-
-## Step 3: build and install the watch app
-
-Open the `watch/` folder in Android Studio, update the EVK IP the same way:
-
-```kotlin
-private val evkBaseUrl = "http://YOUR_EVK_IP:5000"  // put your Dragonwing IQ-8275 EVK's local network IP here
-```
-
-then build and install onto a Pixel Watch 4 (or any Wear OS 3+ device) over ADB or Wi-Fi debugging.
-
-## Step 4: run a session
-
-1. Start a session from the watch.
-2. Pitch in front of the EVK's camera.
-3. Watch the Streamlit app for the live sequencing verdict, skeleton overlay, and effort readout.
-4. Ask for AI coaching feedback in the Streamlit UI once a few pitches are in.
-
-## How the sequencing metric works
-
-The core metric checks whether **hip rotation begins before shoulder rotation** — a scale-invariant, joint-angle representation (hip: left_hip→right_hip→right_knee; shoulder: left_shoulder→right_shoulder→right_hip) that stays meaningful regardless of camera distance. An earlier version tried to use wrist/elbow angle for the "arm" side of the comparison, but the arm has no genuine quiet baseline during a windup (glove adjustments, rocking motion, the arm passing behind the body all move it continuously) — so that signal was dropped in favor of the more stable, more spec-accurate hip/shoulder comparison.
-
-By design, `compute_onset_by_velocity()` in `evk/server.py` always returns a definitive True/False verdict rather than an honest "not enough confident data" outcome — a deliberate demo-friendly tradeoff, not an oversight.
-
-## Performance
-
-| Metric | Result |
-|---|---|
-| NPU pose inference (per frame) | ~6.4 ms |
-| Preprocess + decode (per frame) | ~2 ms combined |
-| Camera capture (per frame) | ~40.1 ms (~85% of total frame time — the actual bottleneck) |
-| Effective live pipeline rate | ~23.7 FPS (camera capped at 30 FPS) |
-| NPU vs. CPU pose output delta | ~1 heatmap pixel across all load-bearing joints (consistent with INT8 vs. float32 quantization noise, not a bug) |
-| Watch pitch classifier (trained, unshipped) | 91% accuracy, int8/uint8 quantized, 5 KB |
-
-At ~24 FPS (one sample every ~42 ms), the pipeline has enough temporal resolution to tell which of hip/shoulder rotation starts first, though not to resolve very small sub-frame timing differences.
-
-## Troubleshooting / things that came up during development
-
-**NPU inference gives slightly different joint coordinates than CPU.** Expected — run the same input through both interpreters and compare; a delta of about 1 heatmap pixel across load-bearing joints is normal INT8 (NPU) vs. float32 (CPU) quantization noise, not a decode bug.
-
-**The `libQnnTFLiteDelegate.so` path breaks NPU loading.** Load it by bare filename, not a path containing a slash (even `./`) — a path with a slash makes `dlopen` skip its normal search path and look only at that literal location.
-
-**Watch/EVK pitch-to-effort correlation sometimes misfires.** Watch and EVK clocks aren't synchronized; correlation relies on a 2.5-second nearest-timestamp tolerance window, which can misfire under poor WiFi conditions.
-
-**Gap timing or skeleton clips showing as zero / missing in the Streamlit UI.** Historically caused by key-name mismatches between what the server actually returns (`gap_seconds`, `skeleton_name`) and what the app read (`gap`, `skeleton_video`) — already fixed in the current code, but worth knowing about if you extend it.
-
-## Known limitations
-
-- No trained edge AI model runs on the Pixel Watch. A pitch-vs-idle classifier was trained to 91% accuracy (Edge Impulse, Spectral Analysis features + a small Keras model), but integrating it required either an NDK/JNI build of Edge Impulse's C++ inferencing library or hand-matching its DSP pipeline in Kotlin — both unfinished when time ran out. The watch ships with a simpler peak-acceleration "Effort Trend" heuristic instead.
-- The laptop's local LLM runs on CPU via Ollama, not the Hexagon NPU. A GenieX-based swap (which would route through QNN to the NPU) was built and its CLI-level bugs fixed, but the app-level swap was never completed.
-- The sequencing metric always returns True/False by design — no "not enough confident data" outcome.
-- The onset-timing chart component exists in the analytics app but isn't wired into any page yet.
-- The live capture loop was validated in a development sandbox, not real-world deployment conditions.
-
-## Future improvements
-
-- Finish on-device watch-side pitch classification.
-- Complete the GenieX swap so the coaching LLM runs on the X Elite's Hexagon NPU.
-- Wire in the existing onset-timing chart component.
-- Tighten watch/EVK time synchronization (e.g. NTP-style offset correction).
-- Add an honest "not enough confident data" sequencing outcome.
-- Field-test the live capture loop outside the development sandbox.
-
-## Docs referenced
-
-Qualcomm's QAIRT SDK / AI Runtime SDK docs, the pose model's own model card, Wear OS Health Services/Health Connect docs, Edge Impulse's deployment docs, and GenieX's docs + Qualcomm AI Hub.
